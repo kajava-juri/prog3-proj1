@@ -4,6 +4,8 @@
 #include "Items.h"
 #include "Headers.h"
 #include "DataSource.h"
+#include "DataStructure.h"
+#include "Test.h"
 using namespace std;
 // IMPORTANT: follow the given order of *.h files: DataSource.h must be the last
 #define NITEM 4 // define you item
@@ -16,6 +18,11 @@ int main()
 		//HEADER_A** pp3 = GetStruct3(NITEM, 100);
 		//HEADER_D* p4 = GetStruct4(NITEM, 100);
 		HEADER_E* p5 = GetStruct5(NITEM, 100);
+		cout << "Data structure created successfully." << endl;
+		DataStructure* pds = new DataStructure(100);
+		cout << *pds << endl << endl;
+
+		//EvaluationTest<ITEM4>(NITEM, "DataStructure.dat");
 	}
 	catch (exception& e)
 	{

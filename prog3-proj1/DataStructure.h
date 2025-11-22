@@ -3,6 +3,7 @@
 #include "Items.h"
 #include <string>
 #include <exception>
+#include <iostream>
 
 #define ITEM_TYPE 4
 
@@ -33,11 +34,14 @@ public:
     ITEM4 GetItem(char* pID);
 
     // Add item operator
-    void operator+=(ITEM4) throw(std::exception);
+    void operator+=(ITEM4 *item) throw(std::exception);
 
     // Remove item by ID operator
     void operator-=(char* pID) throw(std::exception);
 
     // Write data structure to binary file
     void Write(std::string Filename) throw(std::exception);
+
+    // Friend function for output stream operator
+    friend std::ostream& operator<<(std::ostream& ostr, const DataStructure& str);
 };

@@ -38,5 +38,8 @@
     <ClInclude Include="DataStructure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\Desktop\apps_archive\taltech\prog3\prog3-proj1\Test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

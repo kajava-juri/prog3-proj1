@@ -5,10 +5,10 @@
 #else
 #define LIBSPEC extern "C" _declspec(dllimport)
 #endif
-LIBSPEC HEADER_B *GetStruct1(int iItem, int nItems);
-LIBSPEC HEADER_C *GetStruct2(int iItem, int nItems);
-LIBSPEC HEADER_A **GetStruct3(int iItem, int nItems);
-LIBSPEC HEADER_D *GetStruct4(int iItem, int nItems);
+//LIBSPEC HEADER_B *GetStruct1(int iItem, int nItems);
+//LIBSPEC HEADER_C *GetStruct2(int iItem, int nItems);
+//LIBSPEC HEADER_A **GetStruct3(int iItem, int nItems);
+//LIBSPEC HEADER_D *GetStruct4(int iItem, int nItems);
 LIBSPEC HEADER_E *GetStruct5(int iItem, int nItems);
 LIBSPEC void *GetItem(int iItem, char *pID = nullptr);
 LIBSPEC void SetInstructorMode(); // asks password

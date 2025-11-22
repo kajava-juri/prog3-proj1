@@ -129,6 +129,7 @@
     <ClCompile Include="prog3-proj1.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Desktop\apps_archive\taltech\prog3\prog3-proj1\Test.h" />
     <ClInclude Include="DataSource.h" />
     <ClInclude Include="DataStructure.h" />
     <ClInclude Include="DateTime.h" />
