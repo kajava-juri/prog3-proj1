@@ -58,19 +58,6 @@ DataStructure::DataStructure(int n) : pStruct(nullptr) {
     }
 }
 
-// Constructor that takes a filename and may throw exception
-DataStructure::DataStructure(std::string Filename) throw(std::exception) : pStruct(nullptr) {
-    std::ifstream file(Filename);
-    if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file: " + Filename);
-    }
-
-    // TODO: Implement file reading logic based on file format
-    // This would need to parse the file and construct the HEADER_E structure
-
-    file.close();
-}
-
 // Destructor
 DataStructure::~DataStructure() {
     // Clean up the linked list structure
@@ -80,11 +67,34 @@ DataStructure::~DataStructure() {
 
         // Clean up the items array if it exists
         if (current->ppItems != nullptr) {
-            // TODO: Need to determine array size and clean up individual items
-            // This depends on how the array size is tracked
+            // Traverse the array and delete each ITEM4
+            for (int i = 0; current->ppItems[i] != nullptr; i++) {
+                ITEM4* item = static_cast<ITEM4*>(current->ppItems[i]);
+
+                if (item != nullptr) {
+                    // Free the dynamically allocated strings
+                    if (item->pID != nullptr) {
+                        delete[] item->pID;
+                        item->pID = nullptr;
+                    }
+
+                    if (item->pDate != nullptr) {
+                        delete[] item->pDate;
+                        item->pDate = nullptr;
+                    }
+
+                    // Delete the item itself
+                    delete item;
+                    current->ppItems[i] = nullptr;
+                }
+            }
+
+            // Delete the array of pointers
             delete[] current->ppItems;
+            current->ppItems = nullptr;
         }
 
+        // Delete the header
         delete current;
         current = next;
     }
@@ -187,7 +197,7 @@ int DataStructure::GetItemsNumber() {
 }
 
 // Get item by ID
-ITEM4 DataStructure::GetItem(char* pID) {
+pointer_to_item DataStructure::GetItem(char* pID) {
     if (pID == nullptr) {
         throw std::invalid_argument("ID cannot be null");
     }
@@ -203,13 +213,13 @@ ITEM4 DataStructure::GetItem(char* pID) {
             // Search items in this header
             if (current->ppItems != nullptr) {
                 for (int i = 0; current->ppItems[i] != nullptr; i++) {
-                    ITEM4* item = static_cast<ITEM4*>(current->ppItems[i]);
+                    pointer_to_item item = static_cast<pointer_to_item>(current->ppItems[i]);
                     if (item != nullptr && item->pID != nullptr) {
                         // Check if second character matches
                         char itemSecondChar = 0;
                         parseID(item->pID, itemSecondChar);
                         if (itemSecondChar == secondChar && strcmp(item->pID, pID) == 0) {
-                            return *item; // Return found item
+                            return item; // Return found item
                         }
                     }
                 }
@@ -346,17 +356,154 @@ void DataStructure::operator-=(char* pID) throw(std::exception) {
         throw std::invalid_argument("ID cannot be null");
     }
 
+    // Parse the ID to get first character
+    char firstChar = pID[0];
+    char secondChar = 0;
+    parseID(pID, secondChar);
+
     HEADER_E* current = pStruct;
+
+    // Find the header matching the first character
     while (current != nullptr) {
-        if (current->ppItems != nullptr) {
-            // TODO: Search and remove item from the array
-            // This requires knowing the array size and managing dynamic arrays
+        if (current->cBegin == firstChar) {
+            // Search for the item in this header
+            if (current->ppItems != nullptr) {
+                // Count items and find the item to remove
+                int itemCount = 0;
+                int removeIndex = -1;
+
+                for (int i = 0; current->ppItems[i] != nullptr; i++) {
+                    ITEM4* item = static_cast<ITEM4*>(current->ppItems[i]);
+                    if (item != nullptr && item->pID != nullptr) {
+                        if (strcmp(item->pID, pID) == 0) {
+                            removeIndex = i;
+                        }
+                    }
+                    itemCount++;
+                }
+
+                // If item was found, remove it
+                if (removeIndex != -1) {
+                    ITEM4* itemToRemove = static_cast<ITEM4*>(current->ppItems[removeIndex]);
+
+                    // Update pNext pointers in the linked list
+                    if (removeIndex > 0) {
+                        ITEM4* prevItem = static_cast<ITEM4*>(current->ppItems[removeIndex - 1]);
+                        if (removeIndex < itemCount - 1) {
+                            prevItem->pNext = static_cast<ITEM4*>(current->ppItems[removeIndex + 1]);
+                        }
+                        else {
+                            prevItem->pNext = nullptr;
+                        }
+                    }
+
+                    // Free memory for the item
+                    if (itemToRemove->pID != nullptr) {
+                        delete[] itemToRemove->pID;
+                    }
+                    if (itemToRemove->pDate != nullptr) {
+                        delete[] itemToRemove->pDate;
+                    }
+                    delete itemToRemove;
+
+                    // Create new array without the removed item
+                    if (itemCount == 1) {
+                        // This was the only item, just delete the array
+                        delete[] current->ppItems;
+                        current->ppItems = nullptr;
+                    }
+                    else {
+                        // Create smaller array
+                        void** newArray = new void* [itemCount]; // itemCount includes nullptr terminator
+
+                        // Copy items before the removed item
+                        for (int i = 0; i < removeIndex; i++) {
+                            newArray[i] = current->ppItems[i];
+                        }
+
+                        // Copy items after the removed item
+                        for (int i = removeIndex + 1; i < itemCount; i++) {
+                            newArray[i - 1] = current->ppItems[i];
+                        }
+
+                        // Null terminator
+                        newArray[itemCount - 1] = nullptr;
+
+                        // Delete old array and assign new one
+                        delete[] current->ppItems;
+                        current->ppItems = newArray;
+                    }
+
+                    return; // Successfully removed
+                }
+            }
         }
         current = current->pNext;
     }
 
-    // If item not found, could throw exception or silently ignore
+    // If item not found, throw exception
     throw std::runtime_error("Item not found for removal");
+}
+
+bool DataStructure::operator==(DataStructure &Other) {
+    // First check: compare number of items
+    int thisCount = this->GetItemsNumber();
+    int otherCount = Other.GetItemsNumber();
+
+    if (thisCount != otherCount) {
+        return false;
+    }
+
+    // If both are empty, they're equal
+    if (thisCount == 0) {
+        return true;
+    }
+
+    // Second check: verify each item in this structure exists in Other
+    // Traverse all headers in this structure
+    for (HEADER_E* currentHeader = this->pStruct; currentHeader != nullptr; currentHeader = currentHeader->pNext) {
+        if (currentHeader->ppItems != nullptr) {
+            // Traverse items in current header
+            for (int i = 0; currentHeader->ppItems[i] != nullptr; i++) {
+                ITEM4* thisItem = static_cast<ITEM4*>(currentHeader->ppItems[i]);
+
+                if (thisItem != nullptr && thisItem->pID != nullptr) {
+                    // Try to find this item in Other structure
+                    bool found = false;
+
+                    // Search through all headers in Other
+                    for (HEADER_E* otherHeader = Other.pStruct; otherHeader != nullptr; otherHeader = otherHeader->pNext) {
+                        if (otherHeader->ppItems != nullptr) {
+                            // Search items in this header
+                            for (int j = 0; otherHeader->ppItems[j] != nullptr; j++) {
+                                ITEM4* otherItem = static_cast<ITEM4*>(otherHeader->ppItems[j]);
+
+                                if (otherItem != nullptr && otherItem->pID != nullptr) {
+                                    // Compare IDs
+                                    if (strcmp(thisItem->pID, otherItem->pID) == 0) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (found) {
+                                break;
+                            }
+                        }
+                    }
+
+                    // If any item from this structure is not found in Other, they're not equal
+                    if (!found) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    // All items matched
+    return true;
 }
 
 // Credit to geeksforgeeks.org https://www.geeksforgeeks.org/cpp/serialize-and-deserialize-an-object-in-cpp/
@@ -374,6 +521,7 @@ void DataStructure::Write(std::string Filename) {
     try {
         // Count total headers first
         int headerCount = 0;
+		int totalItems = 0;
         HEADER_E* current = pStruct;
         while (current != nullptr) {
             headerCount++;
@@ -402,7 +550,7 @@ void DataStructure::Write(std::string Filename) {
                     itemCount++;
                 }
             }
-
+			totalItems += itemCount;
             // Write item count for this header
             file.write(reinterpret_cast<const char*>(&itemCount), sizeof(int));
 
@@ -438,6 +586,84 @@ void DataStructure::Write(std::string Filename) {
     catch (const std::exception& e) {
         file.close();
         throw std::runtime_error("Error writing to file: " + std::string(e.what()));
+    }
+}
+
+DataStructure::DataStructure(std::string Filename) throw(std::exception) : pStruct(nullptr) {
+    std::ifstream file(Filename, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open file: " + Filename);
+    }
+
+    if (!file.good()) {
+        file.close();
+		throw std::runtime_error("File is not in good state: " + Filename);
+    }
+
+    try {
+		HEADER_E* prevHeader = nullptr;
+        // Header count
+        int headerCount = 0;
+		file.read((char*)&headerCount, sizeof(int));
+
+        for (int h = 0; h < headerCount; h++) {
+			char cBegin;
+			file.read(&cBegin, sizeof(char));
+
+			int itemCount = 0;
+			file.read((char*)&itemCount, sizeof(int));
+
+			ITEM4** itemsArray = new ITEM4 * [itemCount + 1]; // +1 for nullptr terminator
+			
+            for (int i = 0; i < itemCount; i++) {
+				ITEM4* item = new ITEM4;
+				file.read((char*)&item->Code, sizeof(unsigned long int));
+
+				// for reading strings, read length -> allocate -> read content -> null terminate
+				int idLength = 0;
+				file.read((char*)&idLength, sizeof(int));
+				item->pID = new char[idLength + 1];
+                file.read((char*)item->pID, idLength);
+				item->pID[idLength] = '\0';
+
+				int dateLength = 0;
+                file.read((char*)&dateLength, sizeof(int));
+				item->pDate = new char[dateLength + 1];
+				file.read((char*)item->pDate, dateLength);
+				item->pDate[dateLength] = '\0';
+				item->pNext = nullptr;
+				itemsArray[i] = item;
+
+                if (i > 0) {
+                    itemsArray[i - 1]->pNext = item;
+                }
+            }
+			itemsArray[itemCount] = nullptr; // Null terminator
+
+
+			HEADER_E *lastHeader = new HEADER_E;
+			lastHeader->cBegin = cBegin;
+			lastHeader->ppItems = (void**)itemsArray;
+			lastHeader->pNext = nullptr;
+			lastHeader->pPrior = nullptr;
+
+            if (h > 0) {
+                lastHeader->pPrior = prevHeader;
+                prevHeader->pNext = lastHeader;
+            } else {
+                lastHeader->pPrior = nullptr;
+			    pStruct = lastHeader;
+			}
+
+            prevHeader = lastHeader;
+
+        }
+
+		file.close();
+    }
+    catch (const std::exception& e) {
+        file.close();
+        throw std::runtime_error("Error reading from file: " + std::string(e.what()));
     }
 }
 

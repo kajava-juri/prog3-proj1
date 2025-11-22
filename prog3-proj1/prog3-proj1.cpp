@@ -17,12 +17,17 @@ int main()
 		//HEADER_C* p2 = GetStruct2(NITEM, 100);
 		//HEADER_A** pp3 = GetStruct3(NITEM, 100);
 		//HEADER_D* p4 = GetStruct4(NITEM, 100);
-		HEADER_E* p5 = GetStruct5(NITEM, 100);
-		cout << "Data structure created successfully." << endl;
-		DataStructure* pds = new DataStructure(100);
-		cout << *pds << endl << endl;
+		//HEADER_E* p5 = GetStruct5(NITEM, 100);
+		//cout << "Data structure created successfully." << endl;
+		//DataStructure* pds = new DataStructure(100);
+		//cout << *pds << endl << endl;
 
-		//EvaluationTest<ITEM4>(NITEM, "DataStructure.dat");
+		//pds->Write("DataStructure.bin");
+
+		//DataStructure fromFile("DataStructure.bin");
+		//cout << fromFile << endl;
+
+		EvaluationTest<ITEM4>(NITEM, std::string("C:\\Users\\Dmitr\\Desktop\\apps_archive\\taltech\\prog3\\prog3-proj1\\prog3-proj1\\DataStructure.bin"));
 	}
 	catch (exception& e)
 	{

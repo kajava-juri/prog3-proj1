@@ -1,4 +1,7 @@
 #pragma once
+#include "DataStructure.h"
+#include <iostream>
+using namespace std;
 
 template<typename T> void EvaluationTest(int iItem, std::string filename)
 {
@@ -71,7 +74,7 @@ template<typename T> void EvaluationTest(int iItem, std::string filename)
 	for (int i = 0; i < 6; i++)
 	{
 		strcpy_s(buf, 20, colours[i]);
-		ITEM5* p = (T*)GetItem(iItem, buf);
+		T* p = (T*)GetItem(iItem, buf);
 		*pds6 += (T*)GetItem(iItem, buf);  // test operator+=
 	}
 	cout << *pds6 << endl;
@@ -87,7 +90,7 @@ template<typename T> void EvaluationTest(int iItem, std::string filename)
 	for (int i = 0; i < 6; i++)
 	{
 		strcpy_s(buf, 20, colours[i]);
-		ITEM5* p = (T*)GetItem(iItem, buf);
+		T* p = (T*)GetItem(iItem, buf);
 		*pds6 -= buf;  // test operator-=
 	}
 	cout << "Number of items is " << pds6->GetItemsNumber() << endl; // test number of items
@@ -99,7 +102,7 @@ template<typename T> void EvaluationTest(int iItem, std::string filename)
 	for (int i = 0; i < 6; i++)
 	{
 		strcpy_s(buf, 20, colours[i]);
-		ITEM5* p = (T*)GetItem(iItem, buf);
+		T* p = (T*)GetItem(iItem, buf);
 		*pds7 += (T*)GetItem(iItem, buf);  // test operator+=
 	}
 	strcpy_s(buf, 20, "Heledam Roheline");

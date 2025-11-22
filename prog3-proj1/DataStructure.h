@@ -31,13 +31,15 @@ public:
     int GetItemsNumber();
 
     // Get item by ID
-    ITEM4 GetItem(char* pID);
+    pointer_to_item GetItem(char* pID);
 
     // Add item operator
     void operator+=(ITEM4 *item) throw(std::exception);
 
     // Remove item by ID operator
     void operator-=(char* pID) throw(std::exception);
+
+    bool operator==(DataStructure& Other);
 
     // Write data structure to binary file
     void Write(std::string Filename) throw(std::exception);
