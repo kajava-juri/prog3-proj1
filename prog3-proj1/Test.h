@@ -94,6 +94,7 @@ template<typename T> void EvaluationTest(int iItem, std::string filename)
 		*pds6 -= buf;  // test operator-=
 	}
 	cout << "Number of items is " << pds6->GetItemsNumber() << endl; // test number of items
+	cin.get(c);
 	//
 	// Test 6
 	//
@@ -109,6 +110,7 @@ template<typename T> void EvaluationTest(int iItem, std::string filename)
 	cout << (pds7->GetItem(buf) ? "Item found" : "Item not found") << endl;
 	strcpy_s(buf, 20, "Pleekinud Pruun");
 	cout << (pds7->GetItem(buf) ? "Item found" : "Item not found") << endl;
+	cin.get(c);
 	//
 	// Test 7
 	//

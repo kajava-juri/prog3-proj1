@@ -128,7 +128,7 @@ DataStructure::DataStructure(const DataStructure& Original) : pStruct(nullptr) {
             }
 
             // Allocate new array
-            newHeader->ppItems = new void*[itemCount];
+            newHeader->ppItems = new void*[itemCount+1];
 
             // Deep copy each ITEM4
             for (int i = 0; i < itemCount; i++) {
@@ -158,11 +158,16 @@ DataStructure::DataStructure(const DataStructure& Original) : pStruct(nullptr) {
                     newItem->pDate = nullptr;
                 }
                 
-                // Copy pNext pointer (if this links to items in the same structure)
-                newItem->pNext = originalItem->pNext; // May need adjustment
+                newItem->pNext = nullptr;
+                if (i > 0) {
+                    ITEM4* prevNewItem = static_cast<ITEM4*>(newHeader->ppItems[i - 1]);
+					prevNewItem->pNext = newItem;
+                }
                 
                 newHeader->ppItems[i] = newItem;
             }
+
+			newHeader->ppItems[itemCount] = nullptr;
         } else {
             newHeader->ppItems = nullptr;
         }
@@ -229,7 +234,7 @@ pointer_to_item DataStructure::GetItem(char* pID) {
 	}
 
     // If item not found, throw exception or return empty item
-    throw std::runtime_error("Item not found");
+    return nullptr;
 }
 
 // Add item operator
@@ -443,6 +448,142 @@ void DataStructure::operator-=(char* pID) throw(std::exception) {
 
     // If item not found, throw exception
     throw std::runtime_error("Item not found for removal");
+}
+
+DataStructure& DataStructure::operator=(const DataStructure& Right) {
+    // Check for self-assignment
+    if (this == &Right) {
+        return *this;
+    }
+
+    // Destroy existing contents (same as destructor logic)
+    HEADER_E* current = pStruct;
+    while (current != nullptr) {
+        HEADER_E* next = current->pNext;
+
+        // Clean up the items array if it exists
+        if (current->ppItems != nullptr) {
+            // Traverse the array and delete each ITEM4
+            for (int i = 0; current->ppItems[i] != nullptr; i++) {
+                ITEM4* item = static_cast<ITEM4*>(current->ppItems[i]);
+
+                if (item != nullptr) {
+                    // Free the dynamically allocated strings
+                    if (item->pID != nullptr) {
+                        delete[] item->pID;
+                        item->pID = nullptr;
+                    }
+
+                    if (item->pDate != nullptr) {
+                        delete[] item->pDate;
+                        item->pDate = nullptr;
+                    }
+
+                    // Delete the item itself
+                    delete item;
+                    current->ppItems[i] = nullptr;
+                }
+            }
+
+            // Delete the array of pointers
+            delete[] current->ppItems;
+            current->ppItems = nullptr;
+        }
+
+        // Delete the header
+        delete current;
+        current = next;
+    }
+    pStruct = nullptr;
+
+    // Copy from Right (same as copy constructor logic)
+    if (Right.pStruct == nullptr) {
+        return *this;
+    }
+
+    HEADER_E* originalCurrent = Right.pStruct;
+    HEADER_E* newPrevious = nullptr;
+
+    while (originalCurrent != nullptr) {
+        // 1. Create new HEADER_E node
+        HEADER_E* newHeader = new HEADER_E;
+        newHeader->cBegin = originalCurrent->cBegin;
+        newHeader->pNext = nullptr;
+        newHeader->pPrior = newPrevious;
+
+        // 2. Deep copy the items array
+        if (originalCurrent->ppItems != nullptr) {
+            // Count items (using your sentinel pattern)
+            int itemCount = 0;
+            while (originalCurrent->ppItems[itemCount] != nullptr) {
+                itemCount++;
+                ITEM4* item = static_cast<ITEM4*>(originalCurrent->ppItems[itemCount - 1]);
+                if (item->pID && item->pID[0] == 'Z') break; // Sentinel
+            }
+
+            // Allocate new array
+            newHeader->ppItems = new void* [itemCount + 1];
+
+            // Deep copy each ITEM4
+            for (int i = 0; i < itemCount; i++) {
+                ITEM4* originalItem = static_cast<ITEM4*>(originalCurrent->ppItems[i]);
+                ITEM4* newItem = new ITEM4;
+
+                // Copy the Code
+                newItem->Code = originalItem->Code;
+
+                // Deep copy pID string
+                if (originalItem->pID != nullptr) {
+                    int idLen = strlen(originalItem->pID);
+                    newItem->pID = new char[idLen + 1];
+                    strcpy_s(newItem->pID, idLen + 1, originalItem->pID);
+                }
+                else {
+                    newItem->pID = nullptr;
+                }
+
+                // Deep copy pDate string
+                if (originalItem->pDate != nullptr) {
+                    int dateLen = strlen(originalItem->pDate);
+                    newItem->pDate = new char[dateLen + 1];
+                    strcpy_s(newItem->pDate, dateLen + 1, originalItem->pDate);
+                }
+                else {
+                    newItem->pDate = nullptr;
+                }
+
+                // Set pNext to nullptr (will be linked in next iteration)
+                newItem->pNext = nullptr;
+
+                // Link to previous item if exists
+                if (i > 0) {
+                    ITEM4* prevItem = static_cast<ITEM4*>(newHeader->ppItems[i - 1]);
+                    prevItem->pNext = newItem;
+                }
+
+                newHeader->ppItems[i] = newItem;
+            }
+
+            // Null terminator
+            newHeader->ppItems[itemCount] = nullptr;
+        }
+        else {
+            newHeader->ppItems = nullptr;
+        }
+
+        // 3. Link into new list
+        if (newPrevious != nullptr) {
+            newPrevious->pNext = newHeader;
+        }
+        else {
+            pStruct = newHeader;
+        }
+
+        newPrevious = newHeader;
+        originalCurrent = originalCurrent->pNext;
+    }
+
+    return *this;
 }
 
 bool DataStructure::operator==(DataStructure &Other) {
@@ -678,7 +819,6 @@ std::ostream& operator<<(std::ostream& ostr, const DataStructure& str) {
     
     // Traverse all headers
     for (HEADER_E* currentHeader = str.pStruct; currentHeader != nullptr; currentHeader = currentHeader->pNext) {
-        ostr << "Header [" << currentHeader->cBegin << "]:" << std::endl;
         
         // Traverse items in current header
         if (currentHeader->ppItems != nullptr) {
@@ -688,10 +828,10 @@ std::ostream& operator<<(std::ostream& ostr, const DataStructure& str) {
                 ITEM4* item = static_cast<ITEM4*>(currentHeader->ppItems[i]);
                 
                 if (item != nullptr) {
-                    ostr << "  Item " << (totalItems + 1) << ": ";
-                    ostr << "ID=\"" << (item->pID ? item->pID : "NULL") << "\", ";
-                    ostr << "Code=" << item->Code << ", ";
-                    ostr << "Date=\"" << (item->pDate ? item->pDate : "NULL") << "\"";
+                    ostr << totalItems << ")";
+                    ostr << (item->pID ? item->pID : "NULL") << " ";
+                    ostr << item->Code << " ";
+                    ostr << (item->pDate ? item->pDate : "NULL") << " ";
                     ostr << std::endl;
                     
                     headerItemCount++;
@@ -706,9 +846,10 @@ std::ostream& operator<<(std::ostream& ostr, const DataStructure& str) {
             ostr << "  (no items)" << std::endl;
         }
         
-        ostr << std::endl;
+        //ostr << std::endl;
     }
-    
+
+    ostr << std::endl;
     ostr << "Total items: " << totalItems;
     
     return ostr;

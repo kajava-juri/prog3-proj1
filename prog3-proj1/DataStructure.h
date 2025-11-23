@@ -41,6 +41,8 @@ public:
 
     bool operator==(DataStructure& Other);
 
+    DataStructure& operator=(const DataStructure& Right);
+
     // Write data structure to binary file
     void Write(std::string Filename) throw(std::exception);
 
