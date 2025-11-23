@@ -463,64 +463,24 @@ DataStructure& DataStructure::operator=(const DataStructure& Right) {
     return *this;
 }
 
-bool DataStructure::operator==(DataStructure &Other) {
-    // First check: compare number of items
-    int thisCount = this->GetItemsNumber();
-    int otherCount = Other.GetItemsNumber();
+bool DataStructure::operator==(DataStructure& Other) {
+    if (GetItemsNumber() != Other.GetItemsNumber()) return false;
+    if (GetItemsNumber() == 0) return true;
 
-    if (thisCount != otherCount) {
-        return false;
-    }
-
-    // If both are empty, they're equal
-    if (thisCount == 0) {
-        return true;
-    }
-
-    // Second check: verify each item in this structure exists in Other
-    // Traverse all headers in this structure
-    for (HEADER_E* currentHeader = this->pStruct; currentHeader != nullptr; currentHeader = currentHeader->pNext) {
-        if (currentHeader->ppItems != nullptr) {
-            // Traverse items in current header
-            for (int i = 0; currentHeader->ppItems[i] != nullptr; i++) {
+    for (HEADER_E* currentHeader = this->pStruct; currentHeader; currentHeader = currentHeader->pNext) {
+        if (currentHeader->ppItems) {
+            for (int i = 0; currentHeader->ppItems[i]; i++) {
                 ITEM4* thisItem = static_cast<ITEM4*>(currentHeader->ppItems[i]);
-
-                if (thisItem != nullptr && thisItem->pID != nullptr) {
-                    // Try to find this item in Other structure
-                    bool found = false;
-
-                    // Search through all headers in Other
-                    for (HEADER_E* otherHeader = Other.pStruct; otherHeader != nullptr; otherHeader = otherHeader->pNext) {
-                        if (otherHeader->ppItems != nullptr) {
-                            // Search items in this header
-                            for (int j = 0; otherHeader->ppItems[j] != nullptr; j++) {
-                                ITEM4* otherItem = static_cast<ITEM4*>(otherHeader->ppItems[j]);
-
-                                if (otherItem != nullptr && otherItem->pID != nullptr) {
-                                    // Compare IDs
-                                    if (strcmp(thisItem->pID, otherItem->pID) == 0) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (found) {
-                                break;
-                            }
-                        }
-                    }
-
-                    // If any item from this structure is not found in Other, they're not equal
-                    if (!found) {
-                        return false;
-                    }
+                if (thisItem && thisItem->pID) {
+                    ITEM4* otherItem = static_cast<ITEM4*>(Other.GetItem(thisItem->pID));
+                    if (!otherItem) return false;
+					if (strcmp(thisItem->pID, otherItem->pID) != 0) return false;
+                    if (thisItem->Code != otherItem->Code) return false;
+					if (strcmp(thisItem->pDate, otherItem->pDate) != 0) return false;
                 }
             }
         }
     }
-
-    // All items matched
     return true;
 }
 
