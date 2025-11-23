@@ -11,6 +11,13 @@ class DataStructure {
 private:
     HEADER_E* pStruct;
 
+    void ClearStructure();
+    void DeleteItem(pItem item);
+	HEADER_E* CreateHeaderCopy(const HEADER_E* originalHeader);
+	pItem CreateItemCopy(const pItem originalItem);
+	int CountItems(void** ppItems);
+	void parseID(const char* pID, char& secondChar);
+
 public:
     // Default constructor
     DataStructure();
@@ -31,7 +38,7 @@ public:
     int GetItemsNumber();
 
     // Get item by ID
-    pointer_to_item GetItem(char* pID);
+    pItem GetItem(char* pID);
 
     // Add item operator
     void operator+=(ITEM4 *item) throw(std::exception);

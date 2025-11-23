@@ -53,4 +53,4 @@ typedef struct headerE
 	struct headerE *pPrior;
 } HEADER_E;
 
-typedef item4* pointer_to_item;
+typedef item4* pItem;
